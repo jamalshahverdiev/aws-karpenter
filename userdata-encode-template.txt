@@ -1,0 +1,7 @@
+#!/bin/bash
+set -ex
+CLUSTER_NAME='replace_cluster_name'
+API_SERVER_URL=replace_kubeapiurl
+B64_CLUSTER_CA=replace_cluster_ca
+KUBELET_EXTRA_ARGS='--node-labels=node.k8s.aws/capacity-type=spot'
+/etc/eks/bootstrap.sh $CLUSTER_NAME --kubelet-extra-args $KUBELET_EXTRA_ARGS --b64-cluster-ca $B64_CLUSTER_CA --apiserver-endpoint $API_SERVER_URL 

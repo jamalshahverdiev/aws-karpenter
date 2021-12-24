@@ -1,0 +1,30 @@
+apiVersion: karpenter.sh/v1alpha5
+kind: Provisioner
+metadata:
+  name: default
+spec:
+  provider:
+    instanceProfile: KarpenterNodeInstanceProfile-replace_cluster_name
+    launchTemplate: replace_launch_template
+  # taints:
+  #   - key: example.com/special-taint
+  #     effect: NoSchedule
+  labels:
+    billing-team: my-team
+  requirements:
+    - key: "node.kubernetes.io/instance-type" 
+      operator: In
+      values: ["m5.16xlarge", "m5.2xlarge", "m5.24xlarge", "m5ad.large", "m5ad.xlarge"]
+    - key: "topology.kubernetes.io/zone" 
+      operator: In
+      values: ["us-east-1a", "us-east-1b"]
+    - key: "kubernetes.io/arch" 
+      operator: In
+      values: ["arm64", "amd64"]
+    - key: "karpenter.sh/capacity-type" # If not included, the webhook for the AWS cloud provider will default to on-demand
+      operator: In
+      values: ["spot", "on-demand"]
+  limits:
+    resources:
+      cpu: 1000
+  ttlSecondsAfterEmpty: 30
