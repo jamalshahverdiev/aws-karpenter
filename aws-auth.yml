@@ -4,17 +4,17 @@ data:
     - groups:
       - system:bootstrappers
       - system:nodes      
-      rolearn: arn:aws:iam::958833991614:role/KarpenterNodeRole
+      rolearn: arn:aws:iam::464847494070:role/KarpenterNodeRole
       username: system:node:{{EC2PrivateDNSName}}
     - groups:
       - system:bootstrappers
       - system:nodes
-      rolearn: arn:aws:iam::958833991614:role/eksctl-karpenter-nonprod-nodegrou-NodeInstanceRole-1LAN2WC6U82C0
+      rolearn: arn:aws:iam::464847494070:role/eksctl-karpenter-demo-nodegroup-k-NodeInstanceRole-S9GKNUVKIORC
       username: system:node:{{EC2PrivateDNSName}}
     - groups:
       - system:bootstrappers
       - system:nodes
-      rolearn: arn:aws:iam::958833991614:role/KarpenterNodeRole-karpenter-nonprod
+      rolearn: arn:aws:iam::464847494070:role/KarpenterNodeRole-karpenter-demo
       username: system:node:{{EC2PrivateDNSName}}
   mapUsers: |
     []

@@ -17,7 +17,7 @@ spec:
       values: ["m5.16xlarge", "m5.2xlarge", "m5.24xlarge", "m5ad.large", "m5ad.xlarge"]
     - key: "topology.kubernetes.io/zone" 
       operator: In
-      values: ["us-east-1a", "us-east-1b"]
+      values: ["replace_az_onea", "replace_az_twob", "replace_az_threec"]
     - key: "kubernetes.io/arch" 
       operator: In
       values: ["arm64", "amd64"]

@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 
+cluster_yaml_script='generate_cluster_yaml.sh'
 userdata_template_file='userdata-encode-template.txt'
 karpenter_launchtemp_template_file='karpenter_launchtemp_template.yml'
-key_name='delete-after-test-nonprod'
+key_name=$(cat ${cluster_yaml_script} | grep karpenter_key_name | head -n1 | cut -f2 -d'=' | tr -d "'")
 LAUNCH_TEMPLATE_NAME='KarpenterCustomLaunchTemplate'
 KARPENTER_SG_NAME='Karpenter-EC2-SG'
 aws_auth_configmap_file='aws-auth.yml'
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 # Hardened AMI
-ami_to_set='ami-0194c8e3f6dd95767'
-cluster_yaml_file='cluster.yaml'
+ami_to_set='ami-04635d3effed08298'
+cluster_yaml_file=$(cat ${cluster_yaml_script} | grep cluster_template_output | head -n1 | awk '{ print $1 }' | cut -f2 -d'=' | tr -d "'")
 CLUSTER_NAME=$(cat ${cluster_yaml_file}| grep -A1 metadata | tail -n1 | awk '{ print $(NF)}')
 cluster_vpc_object=$(aws eks describe-cluster --name ${CLUSTER_NAME} --query 'cluster.resourcesVpcConfig')
 CLUSTER_VPCID_GET=$(echo $cluster_vpc_object | jq -r '.vpcId')

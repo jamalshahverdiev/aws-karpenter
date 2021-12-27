@@ -49,3 +49,7 @@ sed -i "s/replace_key_name/${karpenter_key_name}/g;\
     s/replace_az_three/${az_three_subnet}/g;\
     s/replace_region_name/${region_name}/g" ${cluster_template_output}
 
+sed -i "s/replace_az_one/${az_one_subnet}/g;\
+    s/replace_az_two/${az_two_subnet}/g;\
+    s/replace_az_three/${az_three_subnet}/g;" karpenter_provisioner.yml
+
