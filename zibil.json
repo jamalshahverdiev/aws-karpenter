@@ -1,0 +1,74 @@
+{
+    "SecurityGroups": [
+        {
+            "Description": "default VPC security group",
+            "GroupName": "default",
+            "IpPermissions": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "UserIdGroupPairs": [
+                        {
+                            "GroupId": "sg-07de27f53662e44fa",
+                            "UserId": "464847494070"
+                        }
+                    ]
+                }
+            ],
+            "OwnerId": "464847494070",
+            "GroupId": "sg-07de27f53662e44fa",
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "VpcId": "vpc-0858da43a44c44f23"
+        },
+        {
+            "Description": "launch-wizard-5 created 2021-12-25T12:24:17.964+03:00",
+            "GroupName": "launch-wizard-5",
+            "IpPermissions": [
+                {
+                    "FromPort": 22,
+                    "IpProtocol": "tcp",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0",
+                            "Description": ""
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "ToPort": 22,
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "OwnerId": "464847494070",
+            "GroupId": "sg-0ea7e051148fd210e",
+            "IpPermissionsEgress": [
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [
+                        {
+                            "CidrIp": "0.0.0.0/0"
+                        }
+                    ],
+                    "Ipv6Ranges": [],
+                    "PrefixListIds": [],
+                    "UserIdGroupPairs": []
+                }
+            ],
+            "VpcId": "vpc-0858da43a44c44f23"
+        }
+    ]
+}

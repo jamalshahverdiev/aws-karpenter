@@ -3,17 +3,12 @@
 cluster_template_yaml='cluster.yaml'
 cluster_template_output='cluster_output.yaml' && rm ${cluster_template_output}
 karpenter_key_name='karpenter_ec2_key'
+cf_stack_file='setup-infrastructure.yaml'
 new_cluster_name='karpenter-demo' 
+stack_name='setup-karpenter-infra'
+region_name='us-east-2'
 all_keypair_names=$(aws ec2 describe-key-pairs --query 'KeyPairs[].KeyName' --output text)
-subnet_third_octets='''
-11
-12
-13
-20
-21
-22
-23
-'''
+count=600
 
 if [[ "$all_keypair_names" == *"$karpenter_key_name"* ]]; then
     echo "Key with name: ${karpenter_key_name} already exists."
@@ -21,49 +16,36 @@ else
     aws ec2 create-key-pair --key-name "${karpenter_key_name}" | jq -r ".KeyMaterial" > ~/.ssh/${karpenter_key_name}.pem
 fi
 
-create_ngw_igw() {
-    create_subnet_object=$(aws ec2 create-subnet --vpc-id ${get_vpc_id} --cidr-block 10.0.10.0/24)
-    subnet_id_of_object=$(echo ${create_subnet_object} | jq -r '.Subnet.SubnetId')
-    aws ec2 create-tags --resources ${subnet_id_of_object} --tags Key=Name,Value=Public_10 &
-    create_internet_gateway_object_for_vpc=$(aws ec2 create-internet-gateway)
-    get_internet_geateway_id=$(echo $create_internet_gateway_object_for_vpc | jq -r '.InternetGateway.InternetGatewayId')
-    aws ec2 create-tags --resources ${get_internet_geateway_id} --tags Key=Name,Value=Karpenter-VPC-IGW
-    aws ec2 attach-internet-gateway --internet-gateway-id ${get_internet_geateway_id} --vpc-id ${get_vpc_id}
-    create_elastic_ip_object_for_ngw=$(aws ec2 allocate-address --domain vpc)
-    elastic_allocation_id=$(echo ${create_elastic_ip_object_for_ngw} | jq -r '.AllocationId')
-    create_nat_gw_obj=$(aws ec2 create-nat-gateway --subnet-id ${subnet_id_of_object} --allocation-id ${elastic_allocation_id})
-    get_nat_gateway_id=$(echo $create_nat_gw_obj  | jq -r '.NatGateway.NatGatewayId')
-    aws ec2 create-tags --resources ${get_nat_gateway_id} --tags Key=Name,Value=Karpenter-NGW    
-}
-create_network_objects() {
-    create_vpc_object=$(aws ec2 create-vpc --cidr-block 10.0.0.0/16)
-    get_vpc_id=$(echo ${create_vpc_object} | jq -r '.Vpc.VpcId')
-    aws ec2 create-tags --resources ${get_vpc_id} --tags Key=Name,Value=karpenter
-    create_ngw_igw
-    for octet in ${subnet_third_octets}; do
-        create_subnet_object=$(aws ec2 create-subnet --vpc-id ${get_vpc_id} --cidr-block 10.0.${octet}.0/24)
-        subnet_id_of_object=$(echo ${create_subnet_object} | jq -r '.Subnet.SubnetId')
-        create_route_table_object=$(aws ec2 create-route-table --vpc-id ${get_vpc_id})
-        route_table_id_of_object=$(echo $create_route_table_object | jq -r '.RouteTable.RouteTableId')
-        definition='Public_'
-        if [[ ${octet} == 20 || ${octet} == 21 || ${octet} == 22 || ${octet} == 23 ]]; then 
-            definition='Private_';
-            aws ec2 create-route --route-table-id ${route_table_id_of_object} \
-                --destination-cidr-block 0.0.0.0/0 --gateway-id ${get_nat_gateway_id} &
-        else
-            aws ec2 create-route --route-table-id ${route_table_id_of_object} \
-                --destination-cidr-block 0.0.0.0/0 --gateway-id ${get_internet_geateway_id} &
-            
-        fi
-        aws ec2 associate-route-table --route-table-id ${route_table_id_of_object} --subnet-id ${subnet_id_of_object} &
-        for object in ${subnet_id_of_object} ${route_table_id_of_object}; do
-            aws ec2 create-tags --resources ${object} --tags Key=Name,Value=${definition}${octet} &
-        done
-    done
-}
+if [[ $(aws cloudformation describe-stacks --stack-name ${stack_name} --query 'Stacks[].StackName' --output text) != ${stack_name} ]]; then
+    aws cloudformation create-stack --stack-name ${stack_name} \
+        --capabilities CAPABILITY_IAM \
+        --template-body file://./${cf_stack_file} \
+        --region ${region_name} &
+fi
 
-create_network_objects
+
+while [[ $count > 0 ]] ; do
+    echo "$count"
+    count=$(( $count - 1 ))
+    if [[ $(aws cloudformation describe-stacks --stack-name ${stack_name} --query 'Stacks[].StackStatus' --region ${region_name} --output text) == 'CREATE_COMPLETE' ]]; then
+        echo "Cloudformation stack for network settings deployed successful!"
+        break
+    fi
+    sleep 5
+done
+
+get_cft_outputs=$(aws cloudformation describe-stacks --stack-name $stack_name --query 'Stacks[].Outputs[]')
+az_one_subnet=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="PrivateSubnetOne").OutputValue')
+az_two_subnet=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="PrivateSubnetTwo").OutputValue')
+az_three_subnet=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="PrivateSubnetThree").OutputValue')
+get_vpc_id=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="VpcId").OutputValue')
 
 cp ${cluster_template_yaml} ${cluster_template_output} 
-sed -i "s/replace_key_name/${karpenter_key_name}/g;s/replace_cluster_name/${new_cluster_name}/g;s/replace_vpc_id/${get_vpc_id}/g" ${cluster_template_output}
+sed -i "s/replace_key_name/${karpenter_key_name}/g;\
+    s/replace_cluster_name/${new_cluster_name}/g;\
+    s/replace_vpc_id/${get_vpc_id}/g;\
+    s/replace_az_one/${az_one_subnet}/g;\
+    s/replace_az_two/${az_two_subnet}/g;\
+    s/replace_az_three/${az_three_subnet}/g;\
+    s/replace_region_name/${region_name}/g" ${cluster_template_output}
 
