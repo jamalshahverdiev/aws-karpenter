@@ -72,11 +72,19 @@ generate_karpenter_launchtemplate(){
     karpenter_launchtemp_output='karpenter_launchtemp_template_output.yml' && rm ${karpenter_launchtemp_output}
     cp ${karpenter_launchtemp_input} ${karpenter_launchtemp_output} 
     prepare_userdata_file ${userdata_template_file}
-    CREATE_GET_SECURTY_GROUP_ID=$(aws ec2 create-security-group --group-name ${KARPENTER_SG_NAME} --description "${KARPENTER_SG_NAME} for EC2 instances" --vpc-id ${CLUSTER_VPCID_GET} | jq -r '.GroupId')
+    CREATE_GET_SECURTY_GROUP_ID=$(aws ec2 create-security-group --group-name ${KARPENTER_SG_NAME} \
+        --description "${KARPENTER_SG_NAME} for EC2 instances" \
+        --vpc-id ${CLUSTER_VPCID_GET} | jq -r '.GroupId')
     aws ec2 create-tags --resources ${CREATE_GET_SECURTY_GROUP_ID} --tags Key=Name,Value=${KARPENTER_SG_NAME}
     prepare_security_group_rules
-    sed -i "s/UserData_Replace/${b64_encoded_userdata}/g;s/replace_key_name/${key_name}/g;s/company_ami_to_relpace/${ami_to_set}/g;s/replace_security_group/${CREATE_GET_SECURTY_GROUP_ID}/g;s/replace_launch_template/${LAUNCH_TEMPLATE_NAME}/g" ${karpenter_launchtemp_output}
-    karpenter_ct_stack_result=$(aws cloudformation create-stack --stack-name KarpenterLaunchTemplateStack --template-body file://$(pwd)/${karpenter_launchtemp_output} --capabilities CAPABILITY_NAMED_IAM)
+    sed -i "s/UserData_Replace/${b64_encoded_userdata}/g;\
+        s/replace_key_name/${key_name}/g;\
+        s/company_ami_to_relpace/${ami_to_set}/g;\
+        s/replace_security_group/${CREATE_GET_SECURTY_GROUP_ID}/g;\
+        s/replace_launch_template/${LAUNCH_TEMPLATE_NAME}/g" ${karpenter_launchtemp_output}
+    karpenter_ct_stack_result=$(aws cloudformation create-stack --stack-name KarpenterLaunchTemplateStack \
+        --template-body file://$(pwd)/${karpenter_launchtemp_output} \
+        --capabilities CAPABILITY_NAMED_IAM)
     echo ${karpenter_ct_stack_result}
 }
 
