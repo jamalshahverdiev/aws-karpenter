@@ -9,7 +9,6 @@ LAUNCH_TEMPLATE_NAME='KarpenterCustomLaunchTemplate'
 KARPENTER_SG_NAME='Karpenter-EC2-SG'
 aws_auth_configmap_file='aws-auth.yml'
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-# Hardened AMI
 ami_to_set='ami-04635d3effed08298'
 cluster_yaml_file=$(cat ${cluster_yaml_script} | grep cluster_template_output | head -n1 | awk '{ print $1 }' | cut -f2 -d'=' | tr -d "'")
 CLUSTER_NAME=$(cat ${cluster_yaml_file}| grep -A1 metadata | tail -n1 | awk '{ print $(NF)}')
