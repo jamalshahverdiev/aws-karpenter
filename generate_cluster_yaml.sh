@@ -13,7 +13,12 @@ count=600
 if [[ "$all_keypair_names" == *"$karpenter_key_name"* ]]; then
     echo "Key with name: ${karpenter_key_name} already exists."
 else
-    aws ec2 create-key-pair --key-name "${karpenter_key_name}" | jq -r ".KeyMaterial" > ~/.ssh/${karpenter_key_name}.pem
+    if [[ ! -f "~/.ssh/${karpenter_key_name}.pem" ]]; then
+        aws ec2 create-key-pair --key-name "${karpenter_key_name}" | jq -r ".KeyMaterial" > ~/.ssh/${karpenter_key_name}.pem
+    else
+        echo "Key with name ~/.ssh/${karpenter_key_name}.pem is already exists. Please delete it and execute script again!!!"
+        exit 100
+    fi
 fi
 
 if [[ $(aws cloudformation describe-stacks --stack-name ${stack_name} --query 'Stacks[].StackName' --output text) != ${stack_name} ]]; then
