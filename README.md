@@ -9,7 +9,7 @@
 - [`helm`](https://helm.sh/docs/intro/install/)
 - [`TMUX`](https://computingforgeeks.com/linux-tmux-cheat-sheet/)
 
-#### To create cluster YAML file must execute `generate_cluster_yaml.sh` script which will create cloudformation stack with new VPC and `3` private/public subnets. It will automatically fill right values inside of `cluster_output.yaml` file which will be used to create cluster
+#### To create cluster YAML file we must execute `generate_cluster_yaml.sh` script which will create cloudformation stack with new VPC and `3` private/public subnets. It will automatically fill right values inside of `cluster_output.yaml` file which will be used to create cluster
 
 #### Create cluster without node group because we will install calico CNI to the cluster
 
