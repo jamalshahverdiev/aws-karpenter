@@ -1,15 +1,15 @@
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: replace_cluster_name
-  region: replace_region_name
+  name: ${new_cluster_name}
+  region: ${region_name}
   tags: 
     karpenter: nonprod
   version: "1.21"
 iam:
   withOIDC: true
 nodeGroups:
-  - name: replace_cluster_name-ng
+  - name: ${new_cluster_name}-ng
     amiFamily: AmazonLinux2
     instanceType: m5.large
     desiredCapacity: 1
@@ -17,14 +17,14 @@ nodeGroups:
     maxSize: 10
     privateNetworking: true
     ssh:
-      publicKeyName: replace_key_name
+      publicKeyName: ${karpenter_key_name}
 vpc:
-  id: replace_vpc_id
+  id: ${get_vpc_id}
   subnets:
     private:
-      replace_region_namea:
-        id: replace_az_one
-      replace_region_nameb:
-        id: replace_az_two
-      replace_region_namec:
-        id: replace_az_three
+      ${region_name}a:
+        id: ${az_one_subnet}
+      ${region_name}b:
+        id: ${az_two_subnet}
+      ${region_name}c:
+        id: ${az_three_subnet}

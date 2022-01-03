@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
+karpenter_provisioner_template_file='karpenter_provisioner_template.yml'
 cluster_template_yaml='cluster.yaml'
 cluster_template_output='cluster_output.yaml' && rm ${cluster_template_output}
-karpenter_key_name='karpenter_ec2_key'
+export karpenter_key_name='karpenter_ec2_key'
 cf_stack_file='setup-infrastructure.yaml'
-new_cluster_name='karpenter-demo' 
+export new_cluster_name='karpenter-demo'
 stack_name='setup-karpenter-infra'
-region_name='us-east-2'
+export region_name='us-east-2'
 all_keypair_names=$(aws ec2 describe-key-pairs --query 'KeyPairs[].KeyName' --output text)
 count=600
 
@@ -36,21 +37,11 @@ while [[ $count > 0 ]] ; do
 done
 
 get_cft_outputs=$(aws cloudformation describe-stacks --stack-name $stack_name --query 'Stacks[].Outputs[]')
-az_one_subnet=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="PrivateSubnetOne").OutputValue')
-az_two_subnet=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="PrivateSubnetTwo").OutputValue')
-az_three_subnet=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="PrivateSubnetThree").OutputValue')
-get_vpc_id=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="VpcId").OutputValue')
+export az_one_subnet=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="PrivateSubnetOne").OutputValue')
+export az_two_subnet=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="PrivateSubnetTwo").OutputValue')
+export az_three_subnet=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="PrivateSubnetThree").OutputValue')
+export get_vpc_id=$(echo $get_cft_outputs| jq -r '.[]|select(.OutputKey=="VpcId").OutputValue')
 
-cp ${cluster_template_yaml} ${cluster_template_output} 
-sed -i "s/replace_key_name/${karpenter_key_name}/g;\
-    s/replace_cluster_name/${new_cluster_name}/g;\
-    s/replace_vpc_id/${get_vpc_id}/g;\
-    s/replace_az_one/${az_one_subnet}/g;\
-    s/replace_az_two/${az_two_subnet}/g;\
-    s/replace_az_three/${az_three_subnet}/g;\
-    s/replace_region_name/${region_name}/g" ${cluster_template_output}
-
-sed -i "s/replace_az_one/${az_one_subnet}/g;\
-    s/replace_az_two/${az_two_subnet}/g;\
-    s/replace_az_three/${az_three_subnet}/g;" karpenter_provisioner.yml
+cat ${cluster_template_yaml} | envsubst > ${cluster_template_output}
+cat ${karpenter_provisioner_template_file} | envsubst > karpenter_provisioner.yml
 
