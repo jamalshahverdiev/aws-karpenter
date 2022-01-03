@@ -2,6 +2,8 @@
 
 karpenter_provisioner_template_file='karpenter_provisioner_template.yml'
 cluster_template_yaml='cluster.yaml'
+export CLUSTER_NAME='karpenter-scaler'
+export LAUNCH_TEMPLATE_NAME='KarpenterCustomLaunchTemplate'
 cluster_template_output='cluster_output.yaml' && rm ${cluster_template_output}
 export karpenter_key_name='karpenter_ec2_key'
 cf_stack_file='setup-infrastructure.yaml'

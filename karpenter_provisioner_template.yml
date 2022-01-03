@@ -4,8 +4,8 @@ metadata:
   name: default
 spec:
   provider:
-    instanceProfile: KarpenterNodeInstanceProfile-replace_cluster_name
-    launchTemplate: replace_launch_template
+    instanceProfile: KarpenterNodeInstanceProfile-${CLUSTER_NAME}
+    launchTemplate: ${LAUNCH_TEMPLATE_NAME}
   # taints:
   #   - key: example.com/special-taint
   #     effect: NoSchedule
