@@ -4,17 +4,17 @@ data:
     - groups:
       - system:bootstrappers
       - system:nodes      
-      rolearn: arn:aws:iam::REPLACE_AWS_ACCOUNT_ID:role/KarpenterNodeRole
+      rolearn: arn:aws:iam::${AWS_ACCOUNT_ID}:role/KarpenterNodeRole
       username: system:node:{{EC2PrivateDNSName}}
     - groups:
       - system:bootstrappers
       - system:nodes
-      rolearn: arn:aws:iam::REPLACE_AWS_ACCOUNT_ID:role/REPLACE_NODEINSTANCE_ROLE
+      rolearn: arn:aws:iam::${AWS_ACCOUNT_ID}:role/${get_nodeinstance_role_name}
       username: system:node:{{EC2PrivateDNSName}}
     - groups:
       - system:bootstrappers
       - system:nodes
-      rolearn: arn:aws:iam::REPLACE_AWS_ACCOUNT_ID:role/KarpenterNodeRole-REPLACTE_CLUSTER_NAME
+      rolearn: arn:aws:iam::${AWS_ACCOUNT_ID}:role/KarpenterNodeRole-${CLUSTER_NAME}
       username: system:node:{{EC2PrivateDNSName}}
   mapUsers: |
     []

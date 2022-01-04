@@ -32,14 +32,14 @@ Resources:
     Type: AWS::EC2::LaunchTemplate
     Properties:
       LaunchTemplateData:
-        KeyName: replace_key_name
+        KeyName: ${karpenter_key_name}
         IamInstanceProfile:
           # Get ARN of InstanceProfile defined above
           Arn: !GetAtt
             - KarpenterNodeInstanceProfile
             - Arn
-        ImageId: company_ami_to_relpace
-        UserData: "UserData_Replace"
+        ImageId: ${ami_to_set}
+        UserData: "${b64_encoded_userdata}"
         BlockDeviceMappings:
           - Ebs:
               VolumeSize: 120
@@ -47,5 +47,5 @@ Resources:
             DeviceName: /dev/xvda
         # The SecurityGroup must be associated with the cluster VPC
         SecurityGroupIds:
-          - replace_security_group 
-      LaunchTemplateName: replace_launch_template
+          - ${CREATE_GET_SECURTY_GROUP_ID} 
+      LaunchTemplateName: ${LAUNCH_TEMPLATE_NAME}

@@ -1,27 +1,31 @@
 #!/usr/bin/env bash
 
-cluster_yaml_script='generate_cluster_yaml.sh'
-region_name='us-east-2'
-userdata_template_file='userdata-encode-template.txt'
-karpenter_launchtemp_template_file='karpenter_launchtemp_template.yml'
-export key_name=$(cat ${cluster_yaml_script} | grep karpenter_key_name | head -n1 | cut -f2 -d'=' | tr -d "'")
-export LAUNCH_TEMPLATE_NAME='KarpenterCustomLaunchTemplate'
-KARPENTER_SG_NAME='Karpenter-EC2-SG'
-export aws_auth_configmap_file='aws-auth.yml'
-export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export ami_to_set='ami-04635d3effed08298'
-cluster_yaml_file=$(cat ${cluster_yaml_script} | grep cluster_template_output | head -n1 | awk '{ print $1 }' | cut -f2 -d'=' | tr -d "'")
-export CLUSTER_NAME=$(cat ${cluster_yaml_file}| grep -A1 metadata | tail -n1 | awk '{ print $(NF)}')
-cluster_vpc_object=$(aws eks describe-cluster --region ${region_name} \
-    --name ${CLUSTER_NAME} --query 'cluster.resourcesVpcConfig')
-CLUSTER_VPCID_GET=$(echo $cluster_vpc_object | jq -r '.vpcId')
-provisioner_file='karpenter_provisioner.yml'
-DEPLOYMENT_FILE='inflate_deployment.yaml'
+. ./variables.sh
+# cluster_yaml_script='generate_cluster_yaml.sh'
+# region_name='us-east-2'
+# userdata_template_file='userdata-encode-template.txt'
+# karpenter_launchtemp_template_file='karpenter_launchtemp_template.yml'
+# karpenter_launchtemp_output='karpenter_launchtemp_template_output.yml'
+# aws_auth_configmap_output='aws-auth-output.yml'
+# aws_auth_configmap_file='aws-auth.yml'
+# export key_name=$(cat ${cluster_yaml_script} | grep karpenter_key_name | head -n1 | cut -f2 -d'=' | tr -d "'")
+# export LAUNCH_TEMPLATE_NAME='KarpenterCustomLaunchTemplate'
+# KARPENTER_SG_NAME='Karpenter-EC2-SG'
+
+# export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+# export ami_to_set='ami-04635d3effed08298'
+# cluster_yaml_file=$(cat ${cluster_yaml_script} | grep cluster_template_output | head -n1 | awk '{ print $1 }' | cut -f2 -d'=' | tr -d "'")
+# export CLUSTER_NAME=$(cat ${cluster_yaml_file}| grep -A1 metadata | tail -n1 | awk '{ print $(NF)}')
+# cluster_vpc_object=$(aws eks describe-cluster --region ${region_name} \
+#     --name ${CLUSTER_NAME} --query 'cluster.resourcesVpcConfig')
+# CLUSTER_VPCID_GET=$(echo $cluster_vpc_object | jq -r '.vpcId')
+# provisioner_file='karpenter_provisioner.yml'
+# DEPLOYMENT_FILE='inflate_deployment.yaml'
 
 apply_provisioner_and_deployment(){
     # provisioner_output_file='karpenter_provisioner_output.yml' && rm ${provisioner_output_file}
     # cat ${provisioner_file} | envsubst > ${provisioner_output_file}
-    for object in ${provisioner_output_file} ${DEPLOYMENT_FILE}; do kubectl apply -f ${object}; done
+    for object in ${provisioner_file} ${DEPLOYMENT_FILE}; do kubectl apply -f ${object}; done
 }
 
 prepare_userdata_file(){
@@ -64,19 +68,19 @@ prepare_security_group_rules(){
 
 generate_karpenter_launchtemplate(){
     karpenter_launchtemp_input=$1
-    karpenter_launchtemp_output='karpenter_launchtemp_template_output.yml' && rm ${karpenter_launchtemp_output}
-    cp ${karpenter_launchtemp_input} ${karpenter_launchtemp_output} 
+    # karpenter_launchtemp_output='karpenter_launchtemp_template_output.yml' #&& rm ${karpenter_launchtemp_output} 
     prepare_userdata_file ${userdata_template_file}
     export CREATE_GET_SECURTY_GROUP_ID=$(aws ec2 create-security-group --group-name ${KARPENTER_SG_NAME} \
         --description "${KARPENTER_SG_NAME} for EC2 instances" \
         --vpc-id ${CLUSTER_VPCID_GET} | jq -r '.GroupId')
     aws ec2 create-tags --resources ${CREATE_GET_SECURTY_GROUP_ID} --tags Key=Name,Value=${KARPENTER_SG_NAME}
     prepare_security_group_rules
-    sed -i "s/UserData_Replace/${b64_encoded_userdata}/g;\
-        s/replace_key_name/${key_name}/g;\
-        s/company_ami_to_relpace/${ami_to_set}/g;\
-        s/replace_security_group/${CREATE_GET_SECURTY_GROUP_ID}/g;\
-        s/replace_launch_template/${LAUNCH_TEMPLATE_NAME}/g" ${karpenter_launchtemp_output}
+    cat ${karpenter_launchtemp_input} | envsubst > ${karpenter_launchtemp_output}
+    # sed -i "s/UserData_Replace/${b64_encoded_userdata}/g;\
+    #     s/replace_key_name/${key_name}/g;\
+    #     s/company_ami_to_relpace/${ami_to_set}/g;\
+    #     s/replace_security_group/${CREATE_GET_SECURTY_GROUP_ID}/g;\
+    #     s/replace_launch_template/${LAUNCH_TEMPLATE_NAME}/g" ${karpenter_launchtemp_output}
     karpenter_ct_stack_result=$(aws cloudformation create-stack --stack-name KarpenterLaunchTemplateStack \
         --template-body file://$(pwd)/${karpenter_launchtemp_output} \
         --capabilities CAPABILITY_NAMED_IAM)
@@ -84,12 +88,13 @@ generate_karpenter_launchtemplate(){
 }
 
 aws_auth_apply_configmap() {
-    aws_auth_configmap_output='aws-auth-output.yml' && rm ${aws_auth_configmap_output}
-    cp ${aws_auth_configmap_file} ${aws_auth_configmap_output} 
+    # aws_auth_configmap_output='aws-auth-output.yml' && rm ${aws_auth_configmap_output}
+    # cp ${aws_auth_configmap_file} ${aws_auth_configmap_output} 
     export get_nodeinstance_role_name=$(aws iam list-roles | grep -i eksctl | grep -iv service | tail -n1 | cut -f2 -d'/' | tr -d '",')
-    sed -i "s/REPLACE_AWS_ACCOUNT_ID/${AWS_ACCOUNT_ID}/g;\
-    s/REPLACTE_CLUSTER_NAME/${CLUSTER_NAME}/g;\
-    s/REPLACE_NODEINSTANCE_ROLE/${get_nodeinstance_role_name}/g" ${aws_auth_configmap_output}
+    cat ${aws_auth_configmap_file} | envsubst > ${aws_auth_configmap_output}
+    # sed -i "s/REPLACE_AWS_ACCOUNT_ID/${AWS_ACCOUNT_ID}/g;\
+    # s/REPLACTE_CLUSTER_NAME/${CLUSTER_NAME}/g;\
+    # s/REPLACE_NODEINSTANCE_ROLE/${get_nodeinstance_role_name}/g" ${aws_auth_configmap_output}
     kubectl apply -f ${aws_auth_configmap_output}
 }
 
