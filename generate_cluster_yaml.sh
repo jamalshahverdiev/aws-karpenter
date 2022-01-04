@@ -1,18 +1,6 @@
 #!/usr/bin/env bash
 
 . ./variables.sh
-# karpenter_provisioner_template_file='karpenter_provisioner_template.yml'
-# cluster_template_yaml='cluster.yaml'
-# export CLUSTER_NAME='karpenter-scaler'
-# export LAUNCH_TEMPLATE_NAME='KarpenterCustomLaunchTemplate'
-# cluster_template_output='cluster_output.yaml' && rm ${cluster_template_output}
-# export karpenter_key_name='karpenter_ec2_key'
-# cf_stack_file='setup-infrastructure.yaml'
-# export new_cluster_name='karpenter-demo'
-# stack_name='setup-karpenter-infra'
-# export region_name='us-east-2'
-# all_keypair_names=$(aws ec2 describe-key-pairs --query 'KeyPairs[].KeyName' --output text)
-# count=600
 
 if [[ "$all_keypair_names" == *"$karpenter_key_name"* ]]; then
     echo "Key with name: ${karpenter_key_name} already exists."
