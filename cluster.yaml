@@ -1,7 +1,7 @@
 apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 metadata:
-  name: ${new_cluster_name}
+  name: ${CLUSTER_NAME}
   region: ${region_name}
   tags: 
     karpenter: nonprod
@@ -9,7 +9,7 @@ metadata:
 iam:
   withOIDC: true
 nodeGroups:
-  - name: ${new_cluster_name}-ng
+  - name: ${CLUSTER_NAME}-ng
     amiFamily: AmazonLinux2
     instanceType: m5.large
     desiredCapacity: 1

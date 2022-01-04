@@ -15,7 +15,7 @@ export LAUNCH_TEMPLATE_NAME='KarpenterCustomLaunchTemplate'
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export ami_to_set='ami-04635d3effed08298'
 export CLUSTER_NAME='karpenter-scaler'
-export new_cluster_name='karpenter-demo'
+# export new_cluster_name='karpenter-demo'
 KARPENTER_SG_NAME='Karpenter-EC2-SG'
 # cluster_yaml_file=$(cat ${cluster_yaml_script} | grep cluster_template_output | head -n1 | awk '{ print $1 }' | cut -f2 -d'=' | tr -d "'")
 # export CLUSTER_NAME=$(cat ${cluster_yaml_file}| grep -A1 metadata | tail -n1 | awk '{ print $(NF)}')
