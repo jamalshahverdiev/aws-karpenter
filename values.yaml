@@ -1,2 +1,0 @@
-nodeSelector:
-  karpenter.sh/capacity-type: spot
