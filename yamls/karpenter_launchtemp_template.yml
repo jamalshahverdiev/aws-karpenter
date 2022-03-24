@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  # create InstanceProfile wrapper on NodeRole
+  KarpenterNodeInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      InstanceProfileName: "KarpenterNodeInstanceProfile"
+      Path: "/"
+      Roles:
+        - Ref: "KarpenterNodeRole"
+  # create role with basic permissions for EKS node
+  KarpenterNodeRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: "KarpenterNodeRole"
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                !Sub "ec2.${AWS::URLSuffix}"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore"
+  MyLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateData:
+        KeyName: ${karpenter_key_name}
+        IamInstanceProfile:
+          # Get ARN of InstanceProfile defined above
+          Arn: !GetAtt
+            - KarpenterNodeInstanceProfile
+            - Arn
+        ImageId: ${ami_to_set}
+        UserData: "${b64_encoded_userdata}"
+        BlockDeviceMappings:
+          - Ebs:
+              VolumeSize: 120
+              VolumeType: gp3
+            DeviceName: /dev/xvda
+        # The SecurityGroup must be associated with the cluster VPC
+        SecurityGroupIds:
+          - ${CREATE_GET_SECURTY_GROUP_ID} 
+      LaunchTemplateName: ${LAUNCH_TEMPLATE_NAME}
